@@ -23,8 +23,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const participantsHtml =
           details.participants && details.participants.length
-            ? `<div class="participants"><h5>Participants</h5><ul>${details.participants
-                .map((p) => `<li>${p}</li>`)
+            ? `<div class="participants"><h5>Participants</h5><ul style="list-style-type: none; margin: 0; padding: 0;">${details.participants
+                .map((p) => `<li style="display: flex; align-items: center; gap: 8px;">${p} <button class="delete-participant" title="Remove ${p}" data-activity="${name}" data-participant="${p}" style="background: none; border: none; color: #c62828; cursor: pointer; font-size: 16px;">&#10060;</button></li>`)
                 .join("")}</ul></div>`
             : `<div class="participants"><h5>Participants</h5><p class="info">No participants yet</p></div>`;
 
@@ -71,6 +71,8 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        // Refresh activities list to show new participant
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -92,4 +94,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize app
   fetchActivities();
+  // Handle participant deletion
+  activitiesList.addEventListener("click", async (event) => {
+    if (event.target.classList.contains("delete-participant")) {
+      const activityName = event.target.getAttribute("data-activity");
+      const participantName = event.target.getAttribute("data-participant");
+      try {
+        const response = await fetch(`/activities/${encodeURIComponent(activityName)}/unregister`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ participant: participantName }),
+        });
+        if (response.ok) {
+          // Refresh activities list to reflect change
+          fetchActivities();
+        } else {
+          alert("Failed to unregister participant.");
+        }
+      } catch (error) {
+        alert("Error unregistering participant.");
+      }
+    }
+  });
 });
